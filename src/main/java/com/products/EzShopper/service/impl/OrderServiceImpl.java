@@ -38,4 +38,16 @@ public class OrderServiceImpl implements OrderService{
 		
 	}
 
+	@Override
+	public List<Order> getAllOrders() {
+		
+		return orderRepo.findAll();
+	}
+
+	@Override
+	public Order getOrdersByOrderId(String orderId) {
+		
+		return orderRepo.findById(orderId).get();
+	}
+
 }

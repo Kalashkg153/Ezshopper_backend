@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public boolean registerUser(CustomUser user) {
 		
-		if(!userRepo.existsByEmail(user.getEmail())) {
+		if(userRepo.existsByEmail(user.getEmail())) {
 			throw new DataIntegrityViolationException("Account Already Exists with email : " + user.getEmail());
 		}
 		

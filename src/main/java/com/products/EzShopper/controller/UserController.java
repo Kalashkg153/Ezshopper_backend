@@ -51,7 +51,7 @@ public class UserController {
 				return new SuccessResponse("SUCCESS", "Your account has been created successfully.");
 			}
 		} catch (Exception e) {
-			throw new CustomFailedException(HttpStatus.INTERNAL_SERVER_ERROR, "Error occurred while creating your account. Please try again.");
+			throw new CustomFailedException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}
 	

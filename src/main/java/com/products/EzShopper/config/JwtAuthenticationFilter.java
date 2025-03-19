@@ -2,6 +2,7 @@ package com.products.EzShopper.config;
 
 import java.io.IOException;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,6 +11,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.products.EzShopper.exception.CustomFailedException;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,25 +40,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String jwtToken = null;
 		String username = null;
 		
-		if(authHeader != null && authHeader.startsWith("Bearer ")) {
-			jwtToken = authHeader.substring(7);
-			username = jwtUtil.extractUserName(jwtToken);
-			
-//			System.out.println(jwtUtil.extractExpiration(jwtToken));
-		}
-		
-		if(username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-			UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-			
-			if(jwtUtil.validateToken(jwtToken, userDetails)) {
-				Authentication authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-				
-				SecurityContextHolder.getContext().setAuthentication(authToken);
-			}
-		}
-		
-		filterChain.doFilter(request, response);
+		try {
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                jwtToken = authHeader.substring(7);
+                username = jwtUtil.extractUserName(jwtToken); // This line can throw ExpiredJwtException
+            }
+
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                if (jwtUtil.validateToken(jwtToken, userDetails)) {
+                    Authentication authToken = new UsernamePasswordAuthenticationToken(userDetails, null,
+                            userDetails.getAuthorities());
+
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+
+            filterChain.doFilter(request, response); // Continue the filter chain
+
+        } catch (ExpiredJwtException ex) {
+        	throw new CustomFailedException(HttpStatus.UNAUTHORIZED, "Your Session is Expired, Please login again");
+        } catch (MalformedJwtException | UnsupportedJwtException ex) {
+            handleJwtException(response, "Invalid JWT token.");
+        } catch (Exception ex) {
+            handleJwtException(response, "Authentication error: " + ex.getMessage());
+        }
 	}
+	
+	
+	private void handleJwtException(HttpServletResponse response, String message) throws IOException {
+        
+		
+    }
 	
 	
 }

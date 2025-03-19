@@ -4,21 +4,23 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.products.EzShopper.exception.CustomFailedException;
 import com.products.EzShopper.model.Category;
 import com.products.EzShopper.model.CustomUser;
+import com.products.EzShopper.model.Order;
 import com.products.EzShopper.model.Product;
 import com.products.EzShopper.model.SuccessResponse;
 import com.products.EzShopper.service.CategoryService;
+import com.products.EzShopper.service.OrderService;
 import com.products.EzShopper.service.ProductService;
 import com.products.EzShopper.service.UserService;
 
@@ -34,6 +36,9 @@ public class AdminController {
 	
 	@Autowired
 	UserService userService;
+	
+	@Autowired
+	OrderService orderService;
 	
 	@PreAuthorize("hasRole('ROLE_ADMIN')")
 	@PostMapping("/saveCategory")
@@ -73,7 +78,7 @@ public class AdminController {
 	}
 	
 	@PreAuthorize("hasRole('ROLE_ADMIN')")
-	@GetMapping("/	/{id}")
+	@GetMapping("/deleteCategory/{id}")
 	public SuccessResponse deleteCategory(@PathVariable String id) {
 			
 		boolean isDeleted = categoryService.deleteCategory(id);
@@ -193,6 +198,39 @@ public class AdminController {
 	    	throw new CustomFailedException(HttpStatus.INTERNAL_SERVER_ERROR, "Error updating account.");
 	        
 	    }
+		
+	}
+	
+	
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	@GetMapping("/getAllOrders")
+	 public List<Order> getOrders(){
+		 
+		List<Order> foundOrders = orderService.getAllOrders();
+
+	    if (foundOrders.isEmpty()) {
+	    	throw new CustomFailedException(HttpStatus.NO_CONTENT, "No Orders found");
+	    }
+
+	    return foundOrders; 
+	 }
+	
+	@PostMapping("/updateOrderStatus/{orderId}")
+	public boolean updateOrderStatus(@RequestParam String OrderStatus, @PathVariable String orderId) {
+			
+		Order order = orderService.getOrdersByOrderId(orderId);
+		
+		if(order == null) {
+			throw new CustomFailedException(HttpStatus.NOT_FOUND, "Order not Found with id : " + orderId);
+		}
+		
+		try {
+			order.setOrderStatus(OrderStatus);
+			orderService.saveOrder(order);
+			return true;
+		} catch (Exception e) {
+			throw new CustomFailedException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+		}
 		
 	}
 }

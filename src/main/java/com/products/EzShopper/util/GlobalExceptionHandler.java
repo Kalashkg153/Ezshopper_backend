@@ -11,8 +11,17 @@ import com.products.EzShopper.exception.CustomFailedException;
 import com.products.EzShopper.exception.ProductNotFoundException;
 import com.products.EzShopper.exception.UserNotFoundException;
 
+import io.jsonwebtoken.ExpiredJwtException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+	
+	
+	@ExceptionHandler(ExpiredJwtException.class)
+	public ResponseEntity<?> handleExpiredJwtException(ExpiredJwtException ex){
+		
+		return ResponseEntity.status(403).body("Your session has been Expired. Please login again");
+	}
 	
 	@ExceptionHandler(CustomFailedException.class)
 	public ResponseEntity<?> handleCustomFailedException(CustomFailedException ex){
